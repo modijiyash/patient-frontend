@@ -10,7 +10,7 @@ export default function Intro(): JSX.Element {
       <header className="flex justify-start items-center px-4 py-3 bg-blue-600 sticky top-0 z-50">
         <div className="flex items-center h-12 space-x-2">
           <img
-            src="src\pages\WhatsApp Image 2025-09-04 at 22.15.55_e0a95f97.jpg"
+            src="/logo.jpg"
             alt="Neuro-Aid Logo"
             className="h-full object-contain"
           />
@@ -58,7 +58,7 @@ export default function Intro(): JSX.Element {
         <div className="bg-indigo-50 rounded-2xl shadow-md p-10 flex flex-col md:flex-row items-center gap-10">
           <div className="flex-1 flex justify-center md:justify-start">
             <img
-              src="src\pages\WhatsApp Image 2025-09-04 at 20.30.54_87d57e4d.jpg"
+              src="/dementia.jpg"
               alt="Dementia Awareness"
               className="rounded-xl shadow-xl max-w-full h-auto object-cover"
             />
@@ -150,9 +150,9 @@ export default function Intro(): JSX.Element {
         <div className="bg-indigo-50 rounded-2xl shadow-md p-10">
           <h3 className="text-4xl font-bold text-center text-indigo-700 mb-16">App Preview</h3>
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 justify-items-center">
-            <img src="src\pages\WhatsApp Image 2025-09-04 at 21.38.40_be40118e.jpg" alt="App Screenshot 1" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
-            <img src="src\pages\WhatsApp Image 2025-09-04 at 22.39.01_d8494bc3.jpg" alt="App Screenshot 2" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
-            <img src="src\pages\WhatsApp Image 2025-09-04 at 22.40.53_ac3a7605.jpg" alt="App Screenshot 3" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
+            <img src="/preview-1.jpg" alt="App Screenshot 1" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
+            <img src="/preview-2.jpg" alt="App Screenshot 2" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
+            <img src="/preview-3.jpg" alt="App Screenshot 3" className="w-[300px] h-[300px] object-cover rounded-xl shadow-lg" />
           </div>
         </div>
       </section>
