@@ -28,7 +28,7 @@ export default function Home() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("https://patient-frontend-txxi.vercel.app//profile", {
+    fetch("https://patient-backend-olyv.onrender.com/profile", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -65,7 +65,7 @@ export default function Home() {
     };
 
     try {
-      const res = await fetch("https://patient-frontend-txxi.vercel.app/appointments", {
+      const res = await fetch("https://patient-backend-olyv.onrender.com/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(appointment),

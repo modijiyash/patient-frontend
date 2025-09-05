@@ -22,7 +22,7 @@ export default function NotificationsPanel() {
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
-        const res = await fetch("https://patient-frontend-txxi.vercel.app/appointments", {
+        const res = await fetch("https://patient-backend-olyv.onrender.com/appointments", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
