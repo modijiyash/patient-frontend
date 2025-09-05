@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./AuthContext";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
-import Index from "./pages/Index"; 
+import Index from "./pages/dashboard"; 
 import { ThemeProvider } from "./components/theme-provider"; 
 import Intro from "./pages/intro";
 
