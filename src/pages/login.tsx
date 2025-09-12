@@ -1,4 +1,3 @@
-// src/pages/Login.tsx
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -82,7 +81,9 @@ export default function Login() {
         </form>
         <div className="mt-4 text-center">
           <button
-            onClick={() => (window.location.href = "https://neuro-desk-portal.vercel.app")}
+            onClick={() =>
+              (window.location.href = "https://neuro-desk-portal.vercel.app")
+            }
             className="bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition"
           >
             Go to Doctor Portal
