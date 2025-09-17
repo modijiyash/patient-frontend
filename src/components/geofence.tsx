@@ -12,7 +12,7 @@ import { toast } from "@/hooks/use-toast";
 type Status = "not-set" | "set" | "outside";
 
 interface GeofenceCheckProps {
-  userId: string; // ✅ accept from parent
+  userId: string;
 }
 
 export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
@@ -23,10 +23,10 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
   const [lastNotified, setLastNotified] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
-  const patientId = userId; // ✅ directly from props
+  const patientId = userId; 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-  // Setup geofencing
+  
   const setupGeofence = () => {
     if (!navigator.geolocation) {
       toast({ title: "❌ Location not available" });
@@ -51,7 +51,7 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
               patientId,
               lat: latitude,
               lng: longitude,
-              radius: 200, // meters
+              radius: 200,
             }),
           });
         } catch (err) {
@@ -62,7 +62,6 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
     );
   };
 
-  // Monitor geofence
   useEffect(() => {
     if (!geofence) return;
 
@@ -92,7 +91,6 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
     return () => navigator.geolocation.clearWatch(watcher);
   }, [geofence, lastNotified]);
 
-  // Send alert API
   const sendAlertToBackend = async () => {
     try {
       await fetch(`${API_URL}/api/alerts/send-alert`, {
@@ -137,7 +135,6 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
   );
 }
 
-// ✅ Haversine distance
 function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
   const R = 6371000;
   const dLat = (lat2 - lat1) * (Math.PI / 180);

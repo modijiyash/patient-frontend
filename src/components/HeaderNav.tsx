@@ -31,7 +31,7 @@ export default function HeaderNav() {
             className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-400 hover:bg-gray-500 font-bold transition"
           >
             <Home className="h-5 w-5" />
-            Home
+            
           </button>
 
           {/* Engagement */}
@@ -40,7 +40,7 @@ export default function HeaderNav() {
             className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-400 hover:bg-gray-500 font-bold transition"
           >
             <Brain className="h-5 w-5" />
-            Engagement
+            
           </button>
 
           {/* Doctor */}
@@ -49,7 +49,7 @@ export default function HeaderNav() {
             className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-400 hover:bg-gray-500 font-bold transition"
           >
             <Stethoscope className="h-5 w-5" />
-            Doctor
+            
           </button>
 
           {/* Profile */}
@@ -58,7 +58,6 @@ export default function HeaderNav() {
             className="flex items-center gap-2 px-3 py-2 rounded-md bg-gray-400 hover:bg-gray-500 font-bold transition"
           >
             <User className="h-5 w-5" />
-            Profile
           </button>
         </nav>
 

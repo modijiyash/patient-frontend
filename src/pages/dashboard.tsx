@@ -5,8 +5,6 @@ import HeaderNav from "@/components/HeaderNav";
 import SosButton from "@/components/SosButton";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import VoiceChat from "@/components/VoiceChat";
-import MoodCheck from "@/components/MoodCheck";
-import BreathingMeditation from "@/components/BreathingMeditation";
 import GeofenceCheck from "@/components/geofence"; 
 
 type User = {
@@ -81,8 +79,6 @@ export default function Home() {
           {/* 🟢 Pass real patientId to GeofenceCheck */}
           {user && <GeofenceCheck userId={user.id} />}
           <VoiceChat />
-          <MoodCheck />
-          <BreathingMeditation />
         </section>
       </main>
 
