@@ -9,6 +9,26 @@ import {
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 
+import { MapContainer, TileLayer, Circle, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Import marker assets so bundler knows about them
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// Create a custom icon instance
+const defaultIcon = L.icon({
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
 type Status = "not-set" | "set" | "outside";
 
 interface Coordinates {
@@ -23,17 +43,15 @@ export default function GeofenceCheck() {
   const [distance, setDistance] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:10001";
 
-  // ✅ Fetch existing geofence on mount
+  // Fetch existing geofence
   useEffect(() => {
     if (!token) return;
-
     fetch(`https://patient-backend-olyv.onrender.com/api/geofence/get`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(res => res.json())
+      .then(data => {
         if (data.geofence) {
           setGeofence(data.geofence);
           setStatus("set");
@@ -48,17 +66,14 @@ export default function GeofenceCheck() {
       toast({ title: "❌ Location not available" });
       return;
     }
-
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         const newGeofence = { lat: latitude, lng: longitude };
-
         setGeofence(newGeofence);
         setStatus("set");
         setDistance(0);
         toast({ title: "✅ Geofencing has been set up!" });
-
         try {
           await fetch(`https://patient-backend-olyv.onrender.com/api/geofence/set`, {
             method: "POST",
@@ -78,7 +93,6 @@ export default function GeofenceCheck() {
 
   useEffect(() => {
     if (!geofence) return;
-
     const watcher = navigator.geolocation.watchPosition((pos) => {
       const { latitude, longitude } = pos.coords;
       const dist = getDistanceFromLatLonInM(
@@ -88,10 +102,8 @@ export default function GeofenceCheck() {
         geofence.lng
       );
       setDistance(dist);
-
       if (dist > 200) {
         setStatus("outside");
-
         const now = Date.now();
         if (!lastNotified || now - lastNotified > 10 * 60 * 1000) {
           sendAlertToBackend();
@@ -100,8 +112,6 @@ export default function GeofenceCheck() {
       } else {
         setStatus("set");
       }
-
-      // Always update current location in backend
       fetch(`https://patient-backend-olyv.onrender.com/api/geofence/update-location`, {
         method: "POST",
         headers: {
@@ -138,7 +148,7 @@ export default function GeofenceCheck() {
           {status === "not-set"
             ? "No geofence set yet"
             : status === "set"
-            ? "✅ Safe zone set"
+            ? " Safe zone set"
             : "⚠ Patient is outside safe zone"}
         </CardDescription>
       </CardHeader>
@@ -148,8 +158,9 @@ export default function GeofenceCheck() {
           size="lg"
           variant={status === "set" ? "default" : "destructive"}
         >
-          {status === "set" ? "✅ Geofencing Set" : "🚨 Setup Geofencing"}
+          {status === "set" ? " Geofencing Set" : "🚨 Setup Geofencing"}
         </Button>
+
         {distance !== null && (
           <div className="text-sm font-medium text-gray-700">
             Distance from safe zone center:{" "}
@@ -162,11 +173,36 @@ export default function GeofenceCheck() {
             </span>
           </div>
         )}
+
+        {geofence && (
+          <div className="h-64 w-full mt-4 rounded-lg overflow-hidden">
+            <MapContainer
+              center={[geofence.lat, geofence.lng]}
+              zoom={15}
+              scrollWheelZoom={false}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <Marker position={[geofence.lat, geofence.lng]} icon={defaultIcon}>
+                <Popup>Safe Zone Center</Popup>
+              </Marker>
+              <Circle
+                center={[geofence.lat, geofence.lng]}
+                radius={200}
+                pathOptions={{ color: "green", fillColor: "green", fillOpacity: 0.2 }}
+              />
+            </MapContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
+// Helper for distance
 function getDistanceFromLatLonInM(
   lat1: number,
   lon1: number,

@@ -11,6 +11,7 @@ export default function Signup() {
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
+  const [relativePhone, setRelativePhone] = useState(""); // 🆕 Emergency contact
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -35,7 +36,8 @@ export default function Signup() {
           age: Number(age),
           gender,
           phone,
-          role: "patient"
+          relativePhone, // 🆕 Include this in the request
+          role: "patient",
         }),
       });
 
@@ -117,6 +119,14 @@ export default function Signup() {
             placeholder="Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Relative's Phone Number"
+            value={relativePhone}
+            onChange={(e) => setRelativePhone(e.target.value)} // 🆕 Update state
             className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />

@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Bell, Plus, Trash2, ChevronDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -10,7 +16,7 @@ interface Task {
   title: string;
   time: string;
   type: "reminder" | "appointment";
-  dateTime?: string; 
+  dateTime?: string;
 }
 
 export default function NotificationsPanel() {
@@ -18,22 +24,22 @@ export default function NotificationsPanel() {
   const [newTitle, setNewTitle] = useState("");
   const [newDateTime, setNewDateTime] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const token = localStorage.getItem("token");
+  const API_URL = "https://patient-backend-olyv.onrender.com/api";
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("https://patient-backend-olyv.onrender.com/appointments", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+        const apptRes = await fetch(`${API_URL}/appointments`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        if (!apptRes.ok) throw new Error("Failed to fetch appointments");
+        const apptData = await apptRes.json();
+        console.log("Appointments fetched:", apptData);
 
-        if (!res.ok) throw new Error("Failed to fetch appointments");
-
-        const data = await res.json();
-        if (data.status !== "ok") throw new Error("Invalid response");
-
-        const formatted = data.appointments.map((a: any) => ({
+        const appointments = apptData.appointments.map((a: any) => ({
           id: a._id,
           title: "Doctor Appointment",
           time: formatDateTime(`${a.date}T${a.time}`),
@@ -41,15 +47,33 @@ export default function NotificationsPanel() {
           dateTime: `${a.date}T${a.time}`,
         }));
 
-        setTasks(formatted);
+        const remRes = await fetch(`${API_URL}/reminders`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!remRes.ok) throw new Error("Failed to fetch reminders");
+        const remData = await remRes.json();
+        console.log("Reminders fetched:", remData);
+
+        const reminders = remData.reminders.map((r: any) => ({
+          id: r._id,
+          title: r.title,
+          time: formatDateTime(r.dateTime),
+          type: "reminder" as const,
+          dateTime: r.dateTime,
+        }));
+
+        const combined = [...appointments, ...reminders];
+        console.log("Combined tasks:", combined);
+
+        setTasks(combined);
       } catch (err) {
-        console.error("❌ Error fetching appointments:", err);
-        toast({ title: "Error fetching appointments" });
+        console.error("❌ Error fetching data:", err);
+        toast({ title: "Error fetching notifications" });
       }
     };
 
-    fetchAppointments();
-  }, []);
+    fetchData();
+  }, [token]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -58,7 +82,7 @@ export default function NotificationsPanel() {
           if (task.type === "appointment" && task.dateTime) {
             return new Date(task.dateTime).getTime() > Date.now();
           }
-          return true; 
+          return true;
         })
       );
     }, 30000);
@@ -91,6 +115,10 @@ export default function NotificationsPanel() {
 
   function formatDateTime(dateTimeString: string) {
     const date = new Date(dateTimeString);
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid dateTime:", dateTimeString);
+      return "Invalid date";
+    }
     const day = date.toLocaleDateString("en-US", { weekday: "short" });
     const time = date.toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -100,25 +128,79 @@ export default function NotificationsPanel() {
     return `${day}, ${time}`;
   }
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!newTitle.trim() || !newDateTime) {
       toast({ title: "Please enter both title and date/time" });
       return;
     }
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: newTitle,
-      time: formatDateTime(newDateTime),
-      type: "reminder",
-      dateTime: newDateTime,
-    };
-    setTasks((prev) => [...prev, newTask]);
-    setNewTitle("");
-    setNewDateTime("");
+    if (!token) {
+      toast({ title: "Authentication token missing. Please login." });
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const dateObj = new Date(newDateTime);
+      const date = dateObj.toISOString().split("T")[0]; // YYYY-MM-DD
+      const time = dateObj.toTimeString().slice(0, 5); // HH:MM
+
+      const res = await fetch(`${API_URL}/reminders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          date,
+          time,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.log("Failed to save reminder:", text);
+        throw new Error("Failed to save reminder");
+      }
+
+      const data = await res.json();
+
+      const savedReminder: Task = {
+        id: data._id,
+        title: newTitle,
+        time: formatDateTime(`${date}T${time}`),
+        type: "reminder",
+        dateTime: `${date}T${time}`,
+      };
+
+      setTasks((prev) => [...prev, savedReminder]);
+      setNewTitle("");
+      setNewDateTime("");
+      toast({ title: "Reminder added successfully!" });
+    } catch (err) {
+      console.error("❌ Error adding reminder:", err);
+      toast({ title: "Failed to add reminder" });
+    }
+    setIsAdding(false);
   };
 
-  const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  const deleteTask = async (id: string) => {
+    try {
+      const taskToDelete = tasks.find((t) => t.id === id);
+      if (taskToDelete?.type !== "reminder") return;
+
+      const res = await fetch(`${API_URL}/reminders/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to delete reminder");
+
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+      toast({ title: "Reminder deleted" });
+    } catch (err) {
+      console.error("❌ Error deleting reminder:", err);
+      toast({ title: "Failed to delete reminder" });
+    }
   };
 
   const visibleTasks = showAll ? tasks : tasks.slice(0, 2);
@@ -153,7 +235,7 @@ export default function NotificationsPanel() {
             value={newDateTime}
             onChange={(e) => setNewDateTime(e.target.value)}
           />
-          <Button onClick={addTask} aria-label="Add task">
+          <Button onClick={addTask} aria-label="Add task" disabled={isAdding}>
             <Plus />
           </Button>
         </div>
