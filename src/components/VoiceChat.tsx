@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mic, Square } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -14,7 +8,7 @@ const getUserProfile = () => {
   const data = localStorage.getItem("userProfile");
   return data
     ? JSON.parse(data)
-    : { name: "Mihir", age: null, condition: null };
+    : { name: "Mihir", age: null, condition: null }; // 👈 name changed to Mihir
 };
 
 const getOfflineReply = (message: string) => {
@@ -26,44 +20,36 @@ const getOfflineReply = (message: string) => {
   }
 
   if (
-    lowerMsg.includes("can't sleep") ||
-    lowerMsg.includes("insomnia") ||
+    lowerMsg.includes("can't sleep") || 
+    lowerMsg.includes("insomnia") || 
     lowerMsg.includes("sleep at night")
   ) {
     return `${user.name}, try avoiding screens before bedtime, keep your room dark and calm. If the problem continues, discuss with a doctor.`;
   }
 
   if (
-    lowerMsg.includes("don't feel like eating") ||
-    lowerMsg.includes("no appetite") ||
-    lowerMsg.includes("not eating") ||
+    lowerMsg.includes("don't feel like eating") || 
+    lowerMsg.includes("no appetite") || 
+    lowerMsg.includes("not eating") || 
     lowerMsg.includes("eat")
   ) {
     return `${user.name}, loss of appetite can sometimes be due to stress or illness. Try small frequent meals and consult your doctor if it continues.`;
   }
 
-  if (
-    lowerMsg.includes("anxiety") ||
-    lowerMsg.includes("anxious") ||
-    lowerMsg.includes("nervous")
-  ) {
+  if (lowerMsg.includes("anxiety") || lowerMsg.includes("anxious") || lowerMsg.includes("nervous")) {
     return `${user.name}, when you feel anxious, try deep breathing, grounding exercises, or talking to someone you trust. If anxiety persists, please consult a mental health professional.`;
   }
 
-  // Default fallback reply:
-  return `${user.name}, I'm sorry, I don't have advice for that right now. Please try rephrasing or consult a healthcare professional.`;
+  return `I'm here for you ${user.name}. Can you tell me your symptoms?`;
 };
 
 const speakText = (text: string) => {
   if ("speechSynthesis" in window) {
-    console.log("Speaking:", text);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 1;
     utterance.pitch = 1;
     speechSynthesis.speak(utterance);
-  } else {
-    console.warn("Speech synthesis not supported.");
   }
 };
 
@@ -71,7 +57,7 @@ export default function VoiceChat() {
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [botReply, setBotReply] = useState("");
+  const [botReply, setBotReply] = useState(""); // subtitles
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -86,15 +72,13 @@ export default function VoiceChat() {
       recognition.onresult = async (event: any) => {
         const last = event.results.length - 1;
         const spokenText = event.results[last][0].transcript;
-        console.log("Recognized speech:", spokenText);
         setTranscript(spokenText);
         recognition.stop();
         setListening(false);
 
         setIsProcessing(true);
         try {
-          const reply = getOfflineReply(spokenText);
-          console.log("Bot reply:", reply);
+          const reply = getOfflineReply(spokenText); // 👈 only offline replies
           setBotReply(reply);
           toast({ title: "Bot says", description: reply });
           speakText(reply);
@@ -175,12 +159,14 @@ export default function VoiceChat() {
           {listening ? "Stop" : isProcessing ? "Processing..." : "Speak"}
         </Button>
 
+        {/* Show user speech */}
         {transcript && (
           <p className="mt-3 text-lg">
             You said: <span className="font-semibold">{transcript}</span>
           </p>
         )}
 
+        {/* Show bot subtitles */}
         {botReply && (
           <p className="mt-2 text-lg text-blue-600">
             Bot: <span className="font-medium">{botReply}</span>
