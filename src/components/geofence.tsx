@@ -11,22 +11,38 @@ import { toast } from "@/hooks/use-toast";
 
 type Status = "not-set" | "set" | "outside";
 
-interface GeofenceCheckProps {
-  userId: string;
+interface Coordinates {
+  lat: number;
+  lng: number;
 }
 
-export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
-  const [geofence, setGeofence] = useState<{ lat: number; lng: number } | null>(
-    null
-  );
+export default function GeofenceCheck() {
+  const [geofence, setGeofence] = useState<Coordinates | null>(null);
   const [status, setStatus] = useState<Status>("not-set");
   const [lastNotified, setLastNotified] = useState<number | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
 
   const token = localStorage.getItem("token");
-  const patientId = userId; 
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:10001";
 
-  
+  // ✅ Fetch existing geofence on mount
+  useEffect(() => {
+    if (!token) return;
+
+    fetch(`https://patient-backend-olyv.onrender.com/api/geofence/get`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.geofence) {
+          setGeofence(data.geofence);
+          setStatus("set");
+          setDistance(0);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const setupGeofence = () => {
     if (!navigator.geolocation) {
       toast({ title: "❌ Location not available" });
@@ -36,25 +52,23 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
-        setGeofence({ lat: latitude, lng: longitude });
+        const newGeofence = { lat: latitude, lng: longitude };
+
+        setGeofence(newGeofence);
         setStatus("set");
+        setDistance(0);
         toast({ title: "✅ Geofencing has been set up!" });
 
         try {
-          await fetch(`${API_URL}/api/geofence/set`, {
+          await fetch(`https://patient-backend-olyv.onrender.com/api/geofence/set`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              patientId,
-              lat: latitude,
-              lng: longitude,
-              radius: 200,
-            }),
+            body: JSON.stringify(newGeofence),
           });
-        } catch (err) {
+        } catch {
           toast({ title: "⚠ Failed to save geofence in backend" });
         }
       },
@@ -67,15 +81,15 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
 
     const watcher = navigator.geolocation.watchPosition((pos) => {
       const { latitude, longitude } = pos.coords;
-
-      const distance = getDistanceFromLatLonInM(
+      const dist = getDistanceFromLatLonInM(
         latitude,
         longitude,
         geofence.lat,
         geofence.lng
       );
+      setDistance(dist);
 
-      if (distance > 200) {
+      if (dist > 200) {
         setStatus("outside");
 
         const now = Date.now();
@@ -86,6 +100,16 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
       } else {
         setStatus("set");
       }
+
+      // Always update current location in backend
+      fetch(`https://patient-backend-olyv.onrender.com/api/geofence/update-location`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ lat: latitude, lng: longitude }),
+      }).catch(() => {});
     });
 
     return () => navigator.geolocation.clearWatch(watcher);
@@ -93,19 +117,15 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
 
   const sendAlertToBackend = async () => {
     try {
-      await fetch(`${API_URL}/api/alerts/send-alert`, {
+      await fetch(`https://patient-backend-olyv.onrender.com/api/alerts/send-sms`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          patientId,
-          message: "⚠ Patient is OUTSIDE safe zone! Please check immediately.",
-        }),
       });
       toast({ title: "📨 Alert sent to relatives" });
-    } catch (err) {
+    } catch {
       toast({ title: "❌ Failed to send alert" });
     }
   };
@@ -122,7 +142,7 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
             : "⚠ Patient is outside safe zone"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
         <Button
           onClick={setupGeofence}
           size="lg"
@@ -130,19 +150,36 @@ export default function GeofenceCheck({ userId }: GeofenceCheckProps) {
         >
           {status === "set" ? "✅ Geofencing Set" : "🚨 Setup Geofencing"}
         </Button>
+        {distance !== null && (
+          <div className="text-sm font-medium text-gray-700">
+            Distance from safe zone center:{" "}
+            <span
+              className={`font-bold ${
+                status === "outside" ? "text-red-600" : "text-green-600"
+              }`}
+            >
+              {distance.toFixed(1)} meters
+            </span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
+function getDistanceFromLatLonInM(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371000; // meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * (Math.PI / 180)) *
-      Math.cos(lat2 * (Math.PI / 180)) *
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLon / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;

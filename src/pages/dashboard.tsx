@@ -5,7 +5,7 @@ import HeaderNav from "@/components/HeaderNav";
 import SosButton from "@/components/SosButton";
 import NotificationsPanel from "@/components/NotificationsPanel";
 import VoiceChat from "@/components/VoiceChat";
-import GeofenceCheck from "@/components/geofence"; 
+import GeofenceCheck from "@/components/geofence"; // ✅ no props now
 
 type User = {
   username: string;
@@ -76,8 +76,8 @@ export default function Home() {
           className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           <NotificationsPanel />
-          {/* 🟢 Pass real patientId to GeofenceCheck */}
-          {user && <GeofenceCheck userId={user.id} />}
+          {/* ✅ Just render GeofenceCheck, no props */}
+          <GeofenceCheck />
           <VoiceChat />
         </section>
       </main>
