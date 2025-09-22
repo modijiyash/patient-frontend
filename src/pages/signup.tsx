@@ -24,6 +24,10 @@ export default function Signup() {
       return;
     }
 
+    // Ensure +91 prefix
+    const formattedPhone = phone.startsWith("+91") ? phone : `+91${phone}`;
+    const formattedRelativePhone = relativePhone.startsWith("+91") ? relativePhone : `+91${relativePhone}`;
+
     try {
       const res = await fetch("https://patient-backend-olyv.onrender.com/signup", {
         method: "POST",
@@ -35,8 +39,8 @@ export default function Signup() {
           confirmPassword,
           age: Number(age),
           gender,
-          phone,
-          relativePhone, // 🆕 Include this in the request
+          phone: formattedPhone, // updated
+          relativePhone: formattedRelativePhone, // updated
           role: "patient",
         }),
       });
@@ -116,7 +120,7 @@ export default function Signup() {
           </select>
           <input
             type="tel"
-            placeholder="Phone Number"
+            placeholder="Phone Number (without +91)"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -124,9 +128,9 @@ export default function Signup() {
           />
           <input
             type="tel"
-            placeholder="Relative's Phone Number"
+            placeholder="Relative's Phone Number (without +91)"
             value={relativePhone}
-            onChange={(e) => setRelativePhone(e.target.value)} // 🆕 Update state
+            onChange={(e) => setRelativePhone(e.target.value)}
             className="border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
